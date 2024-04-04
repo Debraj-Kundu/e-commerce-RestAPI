@@ -1,0 +1,169 @@
+version: '3.4'
+
+services:
+  eureka-server:
+    container_name: eureka-server
+    image: steeltoeoss/eurekaserver:latest
+    restart: on-failure
+    hostname: eureka-server
+    networks:
+      - ecomm_network
+    environment:
+      - EUREKA_SERVER_ENABLE_SELF_PRESERVATION=false
+    ports:
+      - 8761:8761
+
+  product.api:
+    container_name: product.api
+    image: ${DOCKER_REGISTRY-}debraj2001/e-commerce:productapi
+    restart: on-failure
+    hostname: product.api
+    build:
+      context: .
+      dockerfile: Product.API/Dockerfile
+    networks:
+      - ecomm_network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "9001:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - eureka-server
+
+  cart.api:
+    container_name: cart.api
+    image: ${DOCKER_REGISTRY-}debraj2001/e-commerce:cartapi
+    restart: on-failure
+    hostname: cart.api
+    build:
+      context: .
+      dockerfile: Cart.API/Dockerfile
+    networks:
+      - ecomm_network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "9003:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - eureka-server
+
+  user.auth.api:
+    container_name: user.auth.api
+    image: ${DOCKER_REGISTRY-}debraj2001/e-commerce:userauthapi
+    restart: on-failure
+    hostname: user.auth.api
+    build:
+      context: .
+      dockerfile: User.Auth.API/Dockerfile
+    networks:
+      - ecomm_network
+    environment:
+        - ASPNETCORE_ENVIRONMENT=Production
+        - ASPNETCORE_URLS=http://+:80
+        - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+        - "9004:80"
+    volumes:
+        - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+        - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+        - eureka-server
+
+  inventory.api:
+    container_name: inventory.api
+    image: ${DOCKER_REGISTRY-}debraj2001/e-commerce:inventoryapi
+    restart: on-failure
+    hostname: inventory.api
+    build:
+      context: .
+      dockerfile: Inventory.API/Dockerfile
+    networks:
+      - ecomm_network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "9002:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - eureka-server
+
+  order.api:
+    container_name: order.api
+    image: ${DOCKER_REGISTRY-}debraj2001/e-commerce:orderapi
+    restart: on-failure
+    hostname: order.api
+    build:
+      context: .
+      dockerfile: Order.API/Dockerfile
+    networks:
+      - ecomm_network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "9005:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - eureka-server
+
+  api.gateway:
+    container_name: api.gateway
+    image: ${DOCKER_REGISTRY-}debraj2001/e-commerce:apigateway
+    restart: on-failure
+    hostname: api.gateway
+    build:
+      context: .
+      dockerfile: API.Gateway/Dockerfile
+    networks:
+      - ecomm_network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+    ports:
+      - "8001:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      - eureka-server
+      - product.api
+      - user.auth.api
+      - inventory.api
+      - order.api
+      - cart.api
+
+ 
+  ecomm-mq:
+    container_name: Ecomm.RabbitMq
+    image: rabbitmq:3-management
+    hostname: ecomm-mq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+        RABBITMQ_DEFAULT_USER: guest
+        RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - ecomm_network
+
+networks:
+    ecomm_network:
+
+
+

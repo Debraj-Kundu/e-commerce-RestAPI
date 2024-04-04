@@ -1,0 +1,12 @@
+{
+  "GlobalConfiguration": {
+    "RequestIdKey": "OcRequestId",
+    "DownstreamScheme": "http",
+    "UseServiceDiscovery": true,
+    "ServiceDiscoveryProvider": {
+      "Host": "api.gateway",
+      "Port": 80,
+      "Type": "Eureka" 
+    }
+  }
+}
